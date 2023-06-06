@@ -1,0 +1,18 @@
+.bg-wr {
+    background: hsl(0deg, 0%, 90%);
+}
+.bg-one {
+  background: hsl(0turn, 100%, 69%);
+}
+.bg-two {
+  background: hsl(0.15turn 69% 65%);
+}
+.bg-three {
+  background: hsl(0.3turn 69% 65%);
+}
+.bg-four {
+  background: hsl(0.5turn 69% 65%);
+}
+.bg-five {
+  background: hsl(0.7turn 69% 65%);
+}

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Levels{% endblock %}
+{% block main %}
+
+    <table class="table table-dark table-striped">
+    {% for mission in object_list %}
+        <tr>
+            <td>
+                <a class="text-light" href="{% url 'mission' mission.level mission.mnum %}">{{ mission }}</a>
+            </td>
+            <td>
+                {{ mission.world_record.time_tostr }} by <a href="{% url 'profile' mission.world_record.runner.username|lower %}" class="link-light">{{ mission.world_record.runner.username }}</a>
+            </td>
+        </tr>
+    {% endfor %}
+</table>
+{% endblock %}

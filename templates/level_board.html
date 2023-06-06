@@ -1,0 +1,90 @@
+
+{% extends "base.html" %}
+{% load static %}
+    {% block extrahead %}<link rel="stylesheet" type="text/css" href="{% static 'boards/css/boards.css' %}">{% endblock %}
+    {% block title %}{{ mission }}{% endblock %}
+{% block main %}
+
+<h1>{{ mission }}</h1>
+<hr/>
+<table class="table text-dark table-hover">
+<tbody>
+    <tr class="text-light">
+        <th scope="col">Rank</th>
+        <th scope="col">Player</th>
+        <th scope="col">Time</th>
+        <th scope="col">Date</th>
+        <th scope="col">Source</th>
+    </tr>
+    {% for run,rank in runs %}
+
+        <tr class="{% if run.obsolete %}obsolete{% endif %}{% if run.has_video %}hasvid{% endif %}">
+
+            <th scope="row">{{rank}}</th>
+            <td><a class='link-dark' href="{% url 'profile' run.runner.username|lower %}">{{run.runner.username}}</a></td>
+        <td>{{ run.time_tostr }}</td>
+        <td>{{ run.date_performed|date }}</td>
+            <td>{% if run.has_video %}<a href="{{ run.video_link }}" class="link-dark">{{ run.source }}</a>{% else %}{{ run.source }}{% endif %}</td>
+
+        </tr>
+
+    {% endfor %}
+</tbody>
+</table>
+{% endblock %}
+{% block js %}
+    <script type="text/javascript">
+
+        function updateranks(){
+            var visiblerows = $("tr").not(":first-child").not(":hidden");
+            var n_visible_times = visiblerows.length;
+            console.log(n_visible_times)
+            var quintile = Math.floor(n_visible_times/5);
+
+            visiblerows.each(function(){
+
+                idx = parseInt($(this).children("th")[0].innerText) - 1;
+                if(idx == 0){
+                    $(this).addClass("bg-wr");
+                } else if(idx <= quintile){
+                    $(this).addClass("bg-one");
+                } else if(idx <= 2*quintile){
+                    $(this).addClass("bg-two");
+                } else if(idx <= 3*quintile){
+                    $(this).addClass("bg-three");
+                } else if (idx <= 4*quintile){
+                    $(this).addClass("bg-four");
+                } else {
+                    $(this).addClass("bg-five");
+                }
+
+                //$(this).children().first().text((idx+1).toString());
+
+            });
+        }
+
+        $(window).on('load', function(){
+            $(".obsolete").hide();
+            $("tr").not(":first-child").not(".hasvid").hide();
+            updateranks();
+        });
+        $("#obsoleteChk").change(function(){
+            if(this.checked){
+                $(".obsolete").show()
+            } else{
+                $(".obsolete").hide()
+            }
+            updateranks();
+        });
+        $("#vidChk").change( function (){
+            var els = $("tr").not(":first-child").not(".hasvid");
+            if(this.checked){
+                els.show();
+            } else{
+                els.hide();
+            }
+            updateranks();
+        });
+
+    </script>
+{% endblock %}

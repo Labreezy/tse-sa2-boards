@@ -1,0 +1,43 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+    {% block extrahead %}<link rel="stylesheet" type="text/css" href="{% static 'boards/css/boards.css' %}">{% endblock %}
+    {% block title %}Runner Profile - {{ runner.username }}{% endblock %}
+{% block main %}
+<h1>{{ runner.username }}</h1>
+<hr/>
+    <h2>Total Point Rankings:</h2>
+    <h4>Overall: {{ runner.points_overall }} Points ({{ totalranks.Total|ordinal }})</h4>
+    <h5>Mission 1: {{ runner.points_m1 }} Points ({{totalranks.M1|ordinal}})</h5>
+    <h5>Mission 2: {{ runner.points_m2 }} Points ({{totalranks.M2|ordinal}})</h5>
+    <h5>Mission 3: {{ runner.points_m3 }} Points ({{totalranks.M3|ordinal}})</h5>
+    <h5>Mission 4: {{ runner.points_m4 }} Points ({{totalranks.M4|ordinal}})</h5>
+    <h5>Mission 5: {{ runner.points_m5 }} Points ({{totalranks.M5|ordinal}})</h5>
+
+
+<table class="table text-light">
+<tbody>
+    <tr class="text-light">
+        <th scope="col">Mission</th>
+        <th scope="col">Rank</th>
+        <th scope="col">Time</th>
+        <th scope="col">Date</th>
+        <th scope="col">Source</th>
+    </tr>
+    {% for run in runner.get_all_runs %}
+
+        <tr class="{% if run.obsolete %}obsolete{% endif %}{% if run.has_video %}hasvid{% endif %}">
+
+            <th scope="row">{{ run.mission }}</th>
+        <td>{% if run.get_rank > 0 %}{{ run.get_rank|ordinal }}/{{ run.mission.num_runs }}{% else %}-{% endif %}</td>
+        <td>{{ run.time_tostr }}</td>
+        <td>{{ run.date_performed|date }}</td>
+            <td>{% if run.has_video %}<a href="{{ run.video_link }}" class="link-light">{{ run.source }}</a>{% else %}{{ run.source }}{% endif %}</td>
+
+        </tr>
+
+    {% endfor %}
+</tbody>
+</table>
+{% endblock %}
