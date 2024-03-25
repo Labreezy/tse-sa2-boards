@@ -22,10 +22,16 @@ class Command(BaseCommand):
             game = api.get_game(sa2_game_id)
             sa2runs = {}
 
+            boss_names = [b[1] for b in BOSS_CHOICES]
+            if "Egg Golem (Dark)" not in boss_names:
+                boss_names.append("Egg Golem (Dark)")
+                BOSS_CHOICES.append(("EGD","Egg Golem (Dark)"))
             for level in game.levels:
-
+                if level.name not in boss_names:
+                    continue
                 sa2runs[level.name] = []
-                for category in filter(lambda c: c.type == 'per-level', game.categories):
+
+                for category in filter(lambda c: c.name == "Mission 1", game.categories):
                     print(f"{level.name} {category.name}")
                     mission_runs = []
                     lb = dtypes.Leaderboard(api, data=api.get(f"leaderboards/{sa2_game_id}/level/{level.id}/{category.id}?embed=runners"))
@@ -42,29 +48,31 @@ class Command(BaseCommand):
                             comment += "\n\n" + vidlink
                         date_performed = runobj.date
                         mission_runs.append({"runner": uname, "time": time_s, "comment": comment, "date": date_performed})
-                        time.sleep(.5)
+                        time.sleep(.25)
                     sa2runs[level.name].append(mission_runs)
             json.dump(sa2runs, open(dt.now().strftime(JSON_LOG_FMT), 'w'), indent=2)
             self.stdout.write("Done with src API")
-
+            json.dump(sa2runs, open('bosses.json','w'), indent=2)
         else:
             print(options)
             sa2runs = json.load(options['from_file'][0])
-        LEVEL_CHOICES_DICT = {long: short for short, long in LEVEL_CHOICES}
-        for level in sa2runs.keys():
-            curr_id = LEVEL_CHOICES_DICT[level]
-            curr_level_runs = sa2runs[level]
-            n_missions = 5
-            if "green hill" in level.lower():
-                n_missions = 1
+        BOSS_CHOICES_DICT = {long: short for short, long in BOSS_CHOICES}
+
+        for boss in sa2runs.keys():
+            self.stdout.write(boss)
+            curr_id = BOSS_CHOICES_DICT[boss]
+            curr_level_runs = sa2runs[boss]
+            print(curr_level_runs[0][0])
+            n_missions = 1
             for i in range(n_missions):
-                mission_obj = Mission.objects.filter(mnum=i+1,level=curr_id)
+                mission_obj = Mission.objects.filter(mnum=i+1,level=curr_id,is_boss=True)
                 if not mission_obj.exists():
-                    mission_obj = Mission.objects.create(mnum=i+1,level=curr_id)
+                    mission_obj = Mission.objects.create(mnum=i+1,level=curr_id,is_boss=True)
                 else:
                     mission_obj = mission_obj.first()
                 curr_mission_times = curr_level_runs[i]
                 for run in curr_mission_times:
+                    print(run)
                     runner_name = run['runner']
                     src_qset = Runner.objects.filter(src_username=runner_name)
                     if not src_qset.exists():
@@ -111,6 +119,5 @@ class Command(BaseCommand):
                         tsc_run.source = 'SRC'
                         tsc_run.save()
                         print(tsc_run)
-            if n_missions == 1:
-                break
+
         self.stdout.write("Done Importing")

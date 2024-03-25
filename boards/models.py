@@ -16,7 +16,9 @@ POINTS_M2 = 2
 POINTS_M3 = 3
 POINTS_M4 = 4
 POINTS_M5 = 5
+POINTS_BOSS = 6
 LEVEL_CHOICES = [('CE', 'City Escape'), ('WC', 'Wild Canyon'), ('PL', 'Prison Lane'), ('MHA', 'Metal Harbor'), ('GF', 'Green Forest'), ('PH', 'Pumpkin Hill'), ('MST', 'Mission Street'), ('AM', 'Aquatic Mine'), ('101', 'Route 101'), ('HB', 'Hidden Base'), ('PC', 'Pyramid Cave'), ('DC', 'Death Chamber'), ('EE', 'Eternal Engine'), ('MHE', 'Meteor Herd'), ('CG', 'Crazy Gadget'), ('FR', 'Final Rush'), ('IG', 'Iron Gate'), ('DL', 'Dry Lagoon'), ('SO', 'Sand Ocean'), ('RH', 'Radical Highway'), ('EQ', 'Egg Quarters'), ('LC', 'Lost Colony'), ('WB', 'Weapons Bed'), ('SH', 'Security Hall'), ('WJ', 'White Jungle'), ('280', 'Route 280'), ('SR', 'Sky Rail'), ('MSP', 'Mad Space'), ('CW', 'Cosmic Wall'), ('FC', 'Final Chase'), ('CC', 'Cannon\'s Core'), ('GH', 'Green Hill')]
+BOSS_CHOICES = [('BF', 'Big Foot'), ('EGG1', 'Eggman 1'), ('SH1', 'Shadow 1'), ('KBB', 'King Boom Boo'), ('EGH', 'Egg Golem (Hero)'), ('RG', 'Rouge'), ('EGG2', "Eggman 2"), ('SH2','Shadow 2'), ('HS', 'Hot Shot'), ('T1', 'Tails 1'), ('FD', 'Flying Dog'), ('SO1','Sonic 1'), ('EGD', 'Egg Golem (Dark)'), ('KN', 'Knuckles'), ('T2', 'Tails 2'), ('SO2', 'Sonic 2'), ('BL', 'Biolizard'), ('FH', 'Finalhazard')]
 URL_REGEX = re.compile('(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-&?=%.]+')
 IMG_EXT = ["gif","png","jpg"]
 
@@ -51,6 +53,7 @@ class Runner(models.Model):
     points_m3 = models.IntegerField(default=0)
     points_m4 = models.IntegerField(default=0)
     points_m5 = models.IntegerField(default=0)
+    points_boss = models.IntegerField(default=0)
 
     @property
     def username(self):
@@ -62,6 +65,8 @@ class Runner(models.Model):
         return Run.objects.filter(runner=self,is_obsolete=obsolete,has_vid=vidonly).order_by('-date_performed')
     def compute_points(self,pts_type=POINTS_OVERALL):
         all_user_runs = self.get_all_runs()
+        if pts_type == POINTS_BOSS:
+            m_objs = Mission.objects.filter(mnum=1,is_boss=True)
         if pts_type != POINTS_OVERALL:
             m_objs = Mission.objects.filter(mnum=pts_type)
         else:
@@ -85,6 +90,9 @@ class Runner(models.Model):
             current_qset = qset.order_by(f'points_m{i}')
             rank_mission = list(current_qset.values_list('id',flat=True)).index(self.id) + 1
             pdict[f'M{i}'] = rank_mission
+        current_qset = qset.order_by('points_boss')
+        rank_mission = list(current_qset.values_list('id',flat=True)).index(self.id) + 1
+        pdict['Boss'] = rank_mission
         return pdict
 
 
@@ -98,23 +106,32 @@ class Runner(models.Model):
 
 class Mission(models.Model):
     id = models.IntegerField(primary_key=True)
-    level = models.CharField(max_length=3,choices=LEVEL_CHOICES,default='GH')
+    is_boss = models.BooleanField(default=False)
+    level = models.CharField(max_length=4,choices=LEVEL_CHOICES+BOSS_CHOICES,default='GH')
     mnum = models.SmallIntegerField(default=1)
 
     def get_video_runs(self):
-        all_runs = Run.objects.filter(mission=self,has_vid=True,is_obsolete=False).order_by('time_s')
-        return all_runs
+        all_runs = Run.objects.filter(mission=self,is_obsolete=False).order_by('time_s')
+        vid_run_ids = [r.id for r in all_runs if r.has_video]
+        vid_runs = Run.objects.filter(id__in=vid_run_ids)
+        return vid_runs
     def num_runs(self):
         return self.get_video_runs().count()
     @property
     def world_record(self):
-        return self.get_video_runs().first()
+        wr = self.get_video_runs()
+        if wr is not None:
+            return wr.first()
+        else:
+            return Run.objects.filter(mission=self,is_obsolete=False).order_by('time_s').first()
     @property
     def level_slug(self):
         return self.get_level_display().lower().replace(" ", "_")
 
     def __str__(self):
-        return f"{self.get_level_display()} Mission {self.mnum}"
+        if not self.is_boss:
+            return f"{self.get_level_display()} Mission {self.mnum}"
+        return self.get_level_display()
 
 class Run(models.Model):
     id = models.IntegerField(primary_key=True)

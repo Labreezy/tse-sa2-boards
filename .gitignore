@@ -94,3 +94,4 @@ old_utils/
 secret.txt
 # fuck you pycharm lol
 .idea
+venv/
