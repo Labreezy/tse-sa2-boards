@@ -31,7 +31,8 @@ class MissionLeaderboardView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         runs = Run.objects.filter(mission=context['object'],is_obsolete=False).order_by('time_s')
-        ranks = rank_times_min([r.time_s for r in runs if r.has_video])
+        runs = [r for r in runs if r.has_video]
+        ranks = rank_times_min([r.time_s for r in runs])
         context['runs'] = list(zip(runs, ranks))
         return context
 
