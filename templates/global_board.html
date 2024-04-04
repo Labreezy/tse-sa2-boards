@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+    {% block extrahead %}<link rel="stylesheet" type="text/css" href="{% static 'boards/css/boards.css' %}">{% endblock %}
+    {% block title %}
+        {% if mnum == 0 %}Overall{% elif mnum == 6 %}Boss{% else %}Mission {{ mnum }}{% endif %} Point Rankings{% endblock %}
+
+{% block main %}
+    <p class="text-light h1 mx-auto">{% if mnum == 0 %}Overall{% elif mnum == 6 %}Boss{% else %}Mission {{ mnum }}{% endif %} Point Rankings</p>
+    <table class="table text-dark table-hover">
+<tbody>
+    <tr class="text-light">
+        <th scope="col">Rank</th>
+        <th scope="col">Player</th>
+        <th scope="col">Points</th>
+    </tr>
+    {% for runner,points in rankings %}
+        <tr>
+            <th scope="row">{{ forloop.counter }}</th>
+            <td><a class='link-dark' href="{% url 'profile' runner.username|lower %}">{{runner.username}}</a></td>
+        <td>
+        {{ points }}
+        </td>
+        </tr>  
+    {% endfor %}
+
+    
+</tbody>
+    </table>
+{% endblock %}
+
+
+{% block js %}
+    <script type="text/javascript">
+function updateranks(){
+            var visiblerows = $("tr").not(":first-child").not(":hidden");
+            var n_visible_times = visiblerows.length;
+            console.log(n_visible_times)
+            var quintile = Math.floor(n_visible_times/5);
+
+            visiblerows.each(function(){
+
+                idx = parseInt($(this).children("th")[0].innerText) - 1;
+                if(idx == 0){
+                    $(this).addClass("bg-wr");
+                } else if(idx <= quintile){
+                    $(this).addClass("bg-one");
+                } else if(idx <= 2*quintile){
+                    $(this).addClass("bg-two");
+                } else if(idx <= 3*quintile){
+                    $(this).addClass("bg-three");
+                } else if (idx <= 4*quintile){
+                    $(this).addClass("bg-four");
+                } else {
+                    $(this).addClass("bg-five");
+                }
+
+                //$(this).children().first().text((idx+1).toString());
+
+            });
+        }
+        $(window).on('load', updateranks());    
+    </script>
+{% endblock %}

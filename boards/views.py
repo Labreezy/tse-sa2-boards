@@ -15,6 +15,39 @@ class MissionListView(ListView):
         context = super().get_context_data(**kwargs)
         return context
 
+class RunnerRankingView(ListView):
+    model=Runner
+    template_name = "global_board.html"
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['mnum'] = self.kwargs['mnum']
+        return context
+    def get_queryset(self):
+        mnum = self.kwargs['mnum']
+        if mnum == 0:
+            return get_runner_haspoints().order_by('points_overall')
+        elif mnum == 6:
+            runners = Runner.objects.filter(points_boss__gt=0,points_boss__lt=306).order_by('points_boss')
+            return runners
+        else:
+            kwargdict = {f'points_m{mnum}__gt': 0}
+            runners = Runner.objects.filter(**kwargdict).order_by(f'points_m{mnum}')
+            return runners
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        field = 'points_overall'
+        if self.kwargs['mnum'] == 6:
+            field = 'points_boss'
+        elif self.kwargs['mnum'] != 0:
+            field = 'points_m' + str(self.kwargs['mnum'])
+        rankings = [(r,getattr(r,field)) for r in context['runner_list']]
+        context['rankings'] = rankings
+        return context
+
+
+
+
+
 
 
 class MissionLeaderboardView(DetailView):

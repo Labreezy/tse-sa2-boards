@@ -62,19 +62,37 @@ class Runner(models.Model):
         else:
             return self.src_username
     def get_all_runs(self,obsolete=False,vidonly=True):
-        return Run.objects.filter(runner=self,is_obsolete=obsolete,has_vid=vidonly).order_by('-date_performed')
+        runs = Run.objects.filter(runner=self, is_obsolete=obsolete).order_by('-date_performed')
+        if not vidonly:
+            return runs
+        else:
+            run_ids = [run.id for run in runs if run.has_video]
+            return Run.objects.filter(id__in=run_ids).order_by('-date_performed')
+    def recalculate_allpoints(self):
+        overall = 0
+        for i in range(1,6):
+            setattr(self,f"points_m{i}", self.compute_points(i))
+            overall += getattr(self,f"points_m{i}")
+        bosspoints = self.compute_points(POINTS_BOSS)
+        overall += bosspoints
+        self.points_boss = bosspoints
+        self.points_overall = overall
+
+
     def compute_points(self,pts_type=POINTS_OVERALL):
         all_user_runs = self.get_all_runs()
+        m_objs = Mission.objects.all()
         if pts_type == POINTS_BOSS:
-            m_objs = Mission.objects.filter(mnum=1,is_boss=True)
-        if pts_type != POINTS_OVERALL:
-            m_objs = Mission.objects.filter(mnum=pts_type)
-        else:
-            m_objs = Mission.objects.all()
+            m_objs = Mission.objects.filter(is_boss=True)
+        elif pts_type != POINTS_OVERALL:
+            m_objs = Mission.objects.filter(mnum=pts_type,is_boss=False)
+
         total_points = 0
         for m in m_objs:
-            n_mission_runs = m.num_runs()
-            runqset = all_user_runs.filter(mission=m).order_by('time_s')
+            m_runs = Run.objects.filter(mission=m,is_obsolete=False)
+            n_mission_runs = sum([1 for r in m_runs if r.has_video])
+            runqset = all_user_runs.filter(mission=m,is_obsolete=False).order_by('time_s')
+
             if runqset.exists():
                 total_points += n_mission_runs - (n_mission_runs - (runqset.first().get_rank() - 1))
             else:
@@ -167,9 +185,10 @@ class Run(models.Model):
                         return match
                     return ""
     def get_rank(self):
-        if self.has_vid and not self.is_obsolete:
-            runs = list(Run.objects.filter(mission=self.mission,has_vid=True,is_obsolete=False).order_by('time_s'))
-            run_times = [r.time_s for r in runs]
+        if self.has_video and not self.is_obsolete:
+            runs = list(Run.objects.filter(mission=self.mission,is_obsolete=False).order_by('time_s'))
+
+            run_times = [r.time_s for r in runs if r.has_video]
             ranks = rank_times_min(run_times)
             idx = run_times.index(self.time_s)
             return ranks[idx]
