@@ -24,13 +24,10 @@ class Command(BaseCommand):
             resp = requests.get("https://speedrun.com/api/v1/games/" + sa2_game_id + "/levels", params=qparams_level)
 
             level_dict = resp.json()
-            skip = True
+
             for level in level_dict['data']:
                 levelname = level['name']
-                if skip:
-                    skip = levelname != "Big Foot"
-                    if skip:
-                        continue
+
                 self.stdout.write(levelname)
                 sa2runs[levelname] = []
                 cat_resp = requests.get(f"https://speedrun.com/api/v1/levels/{level['id']}/categories")
@@ -86,13 +83,13 @@ class Command(BaseCommand):
                                 if p['rel'] == 'next':
                                     has_next = True
                             if has_next:
-                                time.sleep(.25)
+                                time.sleep(.5)
                                 runs_resp = requests.get(p['uri'])
                         else:
                             print(f"Status code: {runs_resp.status_code}")
                             return
                     sa2runs[levelname].append(mission_runs)
-                    time.sleep(.25)
+                    time.sleep(.5)
             json.dump(sa2runs, open(dt.now().strftime(JSON_LOG_FMT), 'w'), indent=2)
             self.stdout.write("Done with src API")
 

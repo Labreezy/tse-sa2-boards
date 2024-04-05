@@ -137,11 +137,7 @@ class Mission(models.Model):
         return self.get_video_runs().count()
     @property
     def world_record(self):
-        wr = self.get_video_runs()
-        if wr is not None:
-            return wr.first()
-        else:
-            return Run.objects.filter(mission=self,is_obsolete=False).order_by('time_s').first()
+        return self.get_video_runs().order_by('time_s').first()
     @property
     def level_slug(self):
         return self.get_level_display().lower().replace(" ", "_")
@@ -187,7 +183,6 @@ class Run(models.Model):
     def get_rank(self):
         if self.has_video and not self.is_obsolete:
             runs = list(Run.objects.filter(mission=self.mission,is_obsolete=False).order_by('time_s'))
-
             run_times = [r.time_s for r in runs if r.has_video]
             ranks = rank_times_min(run_times)
             idx = run_times.index(self.time_s)
