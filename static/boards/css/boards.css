@@ -16,3 +16,6 @@
 .bg-five {
   background: hsl(0.7turn 69% 65%);
 }
+.obsolete {
+  display: none;
+}

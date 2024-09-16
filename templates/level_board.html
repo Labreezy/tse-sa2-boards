@@ -16,11 +16,11 @@
         <th scope="col">Date</th>
         <th scope="col">Source</th>
     </tr>
-    {% for run,rank in runs %}
+    {% for run in runs %}
 
-        <tr class="{% if run.obsolete %}obsolete{% endif %}{% if run.has_video %}hasvid{% endif %}">
+        <tr class="{% if run.obsolete %}obsolete{% endif %} {% if run.has_video %}hasvid{% endif %}">
 
-            <th scope="row">{{rank}}</th>
+            <th scope="row"></th>
             <td><a class='link-dark' href="{% url 'profile' run.runner.username|lower %}">{{run.runner.username}}</a></td>
         <td>{{ run.time_tostr }}</td>
         <td>{{ run.date_performed|date }}</td>
@@ -40,11 +40,28 @@
             var n_visible_times = visiblerows.length;
             console.log(n_visible_times)
             var quintile = Math.floor(n_visible_times/5);
+            var rank = 1
+            var tiecounter = 0;
+            for(var i = 0; i < n_visible_times; i++){
+                if(i > 0){
+                    var last_time = visiblerows[i-1].children[2].innerText;
+                    var this_time = visiblerows[i].children[2].innerText;
+                    if(last_time === this_time){
+                        console.log("tie found at " + i)
+                        tiecounter += 1;
+                    } else {
+                        rank += tiecounter + 1;
+                        tiecounter = 0;
+                    }
+                }
+                 visiblerows[i].children[0].innerText = rank.toString();
+                console.log(rank);
+            }
 
             visiblerows.each(function(){
+                var idx = parseInt($(this).children("th")[0].innerText)
 
-                idx = parseInt($(this).children("th")[0].innerText) - 1;
-                if(idx == 0){
+                if(idx == 1){
                     $(this).addClass("bg-wr");
                 } else if(idx <= quintile){
                     $(this).addClass("bg-one");

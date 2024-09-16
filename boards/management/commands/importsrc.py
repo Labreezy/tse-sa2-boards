@@ -89,7 +89,7 @@ class Command(BaseCommand):
                             print(f"Status code: {runs_resp.status_code}")
                             return
                     sa2runs[levelname].append(mission_runs)
-                    time.sleep(.5)
+                    time.sleep(.    5)
             json.dump(sa2runs, open(dt.now().strftime(JSON_LOG_FMT), 'w'), indent=2)
             self.stdout.write("Done with src API")
 
