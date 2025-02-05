@@ -91,7 +91,7 @@ class Command(BaseCommand):
                     y += 2000
                     date_p = date(y,m,d)
                     comment = r_dict.get("comment","")
-                    runs_qset = Run.objects.filter(mission=mission,time_s__gte=time_s,runner=runner_obj)
+                    runs_qset = Run.objects.filter(mission=mission,time_s__lte=time_s,runner=runner_obj)
                     if not runs_qset.exists():
                         Run.objects.create(mission=mission,time_s=time_s,runner=runner_obj,comment=comment,date_performed=date_p)
                     elif runs_qset.first().time_s > time_s:
